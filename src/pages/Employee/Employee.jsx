@@ -1,139 +1,92 @@
-import { useState } from 'react'
-import SearchFilters from './components/SearchFilters/SearchFilters'
-import EmployeeTable from './components/EmployeeTable/EmployeeTable'
-import Pagination from './components/Pagination/Pagination'
 import './Employee.css'
 
 function Employee() {
-  const [currentPage, setCurrentPage] = useState(1)
-  const [searchFilters, setSearchFilters] = useState({
-    name: '',
-    id: '',
-    designation: ''
-  })
-
-  // Sample employee data
-  const [employees, setEmployees] = useState([
+  const employees = [
     {
       id: 'EMP001',
       name: 'Harry Porter',
-      email: 'anjoli@gmail.com',
+      designation: 'Systems Manager',
       department: 'Technology',
-      designation: 'Systems manager',
+      salary: '$85,000',
+      email: 'harry.porter@company.com',
       mobile: '+1 234 567 8900',
       dateOfJoining: '1 March, 2023'
     },
     {
       id: 'EMP002',
-      name: 'Lary go',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
+      name: 'Lary Go',
+      designation: 'Product Manager',
+      department: 'Product',
+      salary: '$95,000',
+      email: 'lary.go@company.com',
+      mobile: '+1 234 567 8901',
+      dateOfJoining: '12 April, 2023'
     },
     {
       id: 'EMP003',
       name: 'Sumona Gang',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
+      designation: 'UX Designer',
+      department: 'Design',
+      salary: '$78,000',
+      email: 'sumona.gang@company.com',
+      mobile: '+1 234 567 8902',
+      dateOfJoining: '8 May, 2023'
     },
     {
       id: 'EMP004',
       name: 'David Morph',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
-    },
-    {
-      id: 'EMP005',
-      name: 'Willium Cany',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
-    },
-    {
-      id: 'EMP006',
-      name: 'Keny Dinen',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
-    },
-    {
-      id: 'EMP007',
-      name: 'Frintim Zomata',
-      email: 'anjoli@gmail.com',
-      department: 'Technology',
-      designation: 'Systems manager',
-      mobile: '+1 234 567 8900',
-      dateOfJoining: '1 March, 2023'
+      designation: 'Data Analyst',
+      department: 'Analytics',
+      salary: '$82,000',
+      email: 'david.morph@company.com',
+      mobile: '+1 234 567 8903',
+      dateOfJoining: '22 June, 2023'
     }
-  ])
-
-  const itemsPerPage = 5
-  const totalPages = Math.ceil(employees.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage
-  const endIndex = startIndex + itemsPerPage
-  const currentEmployees = employees.slice(startIndex, endIndex)
-
-  const handleDelete = (id) => {
-    setEmployees(employees.filter(emp => emp.id !== id))
-  }
-
-  const handleInputChange = (field, value) => {
-    setSearchFilters({
-      ...searchFilters,
-      [field]: value
-    })
-  }
-
-  const handleFilterClick = () => {
-    // Filter logic can be implemented here
-    console.log('Filter clicked', searchFilters)
-  }
-
-  const handleAddEmployee = () => {
-    alert('Add Employee functionality - to be implemented')
-  }
-
-  const handleEdit = (employee) => {
-    alert(`Edit ${employee.name} - to be implemented`)
-  }
+  ]
 
   return (
     <div className="employee-page">
-      <h1 className="page-title">Hello Thomas</h1>
-      
+      <h1 className="page-title">Employees</h1>
+
       <div className="employee-section">
-        <h2 className="section-heading">Employee</h2>
-        
-        <SearchFilters
-          searchFilters={searchFilters}
-          onInputChange={handleInputChange}
-          onFilterClick={handleFilterClick}
-          onAddEmployee={handleAddEmployee}
-        />
+        <h2 className="section-heading">Employee Details</h2>
 
-        <EmployeeTable
-          employees={currentEmployees}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <div className="employee-cards">
+          {employees.map((emp) => (
+            <div key={emp.id} className="employee-card">
+              <div className="employee-card-header">
+                <div>
+                  <div className="employee-name">{emp.name}</div>
+                  <div className="employee-designation">{emp.designation}</div>
+                </div>
+                <div className="employee-id">{emp.id}</div>
+              </div>
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+              <div className="employee-info-grid">
+                <div className="info-item">
+                  <span className="info-label">Department</span>
+                  <span className="info-value">{emp.department}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Salary</span>
+                  <span className="info-value">{emp.salary}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Email</span>
+                  <span className="info-value">{emp.email}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Mobile</span>
+                  <span className="info-value">{emp.mobile}</span>
+                </div>
+                <div className="info-item">
+                  <span className="info-label">Date of Joining</span>
+                  <span className="info-value">{emp.dateOfJoining}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

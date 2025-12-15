@@ -19,47 +19,17 @@ function Sidebar({ activeMenu, setActiveMenu, showSubmenu, setShowSubmenu, unvie
                 Dashboard
               </a>
             </li>
-            <li className="nav-item-with-submenu">
+            <li>
               <a 
                 href="#" 
                 className={activeMenu === 'Employee' ? 'active' : ''}
                 onClick={(e) => { 
                   e.preventDefault(); 
                   setActiveMenu('Employee'); 
-                  setShowSubmenu(!showSubmenu);
                 }}
               >
-                Employee
-                <span className="submenu-arrow">{showSubmenu ? '▼' : '▶'}</span>
+                Employees
               </a>
-              {showSubmenu && (
-                <ul className="submenu">
-                  <li>
-                    <a 
-                      href="#" 
-                      className={activeMenu === 'Documents' ? 'submenu-item active' : 'submenu-item'}
-                      onClick={(e) => { 
-                        e.preventDefault(); 
-                        setActiveMenu('Documents'); 
-                      }}
-                    >
-                      Documents
-                    </a>
-                  </li>
-                  <li>
-                    <a 
-                      href="#" 
-                      className={activeMenu === 'Assets' ? 'submenu-item active' : 'submenu-item'}
-                      onClick={(e) => { 
-                        e.preventDefault(); 
-                        setActiveMenu('Assets'); 
-                      }}
-                    >
-                      Assets
-                    </a>
-                  </li>
-                </ul>
-              )}
             </li>
             <li>
               <a 
@@ -71,6 +41,15 @@ function Sidebar({ activeMenu, setActiveMenu, showSubmenu, setShowSubmenu, unvie
                 {unviewedCVsCount > 0 && (
                   <span className="nav-badge">{unviewedCVsCount}</span>
                 )}
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#" 
+                className={activeMenu === 'Admin Openings' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setActiveMenu('Admin Openings'); }}
+              >
+                Job Openings
               </a>
             </li>
             <li>
