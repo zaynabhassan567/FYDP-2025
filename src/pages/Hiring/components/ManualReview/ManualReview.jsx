@@ -1,6 +1,6 @@
 import './ManualReview.css'
 
-function ManualReview({ cv, onBack, onNext, onPrevious, totalCVs, currentIndex }) {
+function ManualReview({ cv, onBack, onNext, onPrevious, totalCVs, currentIndex, onShortlist, onReject }) {
   if (!cv) {
     return (
       <div className="manual-review">
@@ -36,17 +36,37 @@ function ManualReview({ cv, onBack, onNext, onPrevious, totalCVs, currentIndex }
         </div>
 
         <div className="cv-preview">
-          <div className="preview-placeholder">
-            <div className="preview-icon">📄</div>
-            <p className="preview-text">CV Preview: {cv.fileName}</p>
-            <p className="preview-note">CV viewer will be implemented here</p>
-          </div>
+          {cv.fileName ? (
+            <iframe
+              src={cv.fileName}
+              title="CV Preview"
+              className="cv-iframe"
+            />
+          ) : (
+            <div className="preview-placeholder">
+              <div className="preview-icon">📄</div>
+              <p className="preview-text">No CV file available</p>
+              <p className="preview-note">The applicant did not upload a CV file.</p>
+            </div>
+          )}
         </div>
 
         <div className="cv-actions">
-          <button className="btn-download">⬇️ Download CV</button>
-          <button className="btn-shortlist">✓ Shortlist</button>
-          <button className="btn-reject">✗ Reject</button>
+          {cv.fileName && (
+            <button
+              className="btn-download"
+              type="button"
+              onClick={() => window.open(cv.fileName, '_blank')}
+            >
+              ⬇️ View / Download CV
+            </button>
+          )}
+          <button className="btn-shortlist" type="button" onClick={onShortlist}>
+            ✓ Shortlist
+          </button>
+          <button className="btn-reject" type="button" onClick={onReject}>
+            ✗ Reject
+          </button>
         </div>
       </div>
 

@@ -111,6 +111,12 @@
   font-style: italic;
 }
 
+.cv-iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+}
+
 .cv-actions {
   display: flex;
   gap: 15px;

@@ -46,6 +46,15 @@ function Sidebar({ activeMenu, setActiveMenu, showSubmenu, setShowSubmenu, unvie
             <li>
               <a 
                 href="#" 
+                className={activeMenu === 'Leaves' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setActiveMenu('Leaves'); }}
+              >
+                Leaves
+              </a>
+            </li>
+            <li>
+              <a 
+                href="#" 
                 className={activeMenu === 'Admin Openings' ? 'active' : ''}
                 onClick={(e) => { e.preventDefault(); setActiveMenu('Admin Openings'); }}
               >
@@ -55,10 +64,10 @@ function Sidebar({ activeMenu, setActiveMenu, showSubmenu, setShowSubmenu, unvie
             <li>
               <a 
                 href="#" 
-                className={activeMenu === 'Salary' ? 'active' : ''}
-                onClick={(e) => { e.preventDefault(); setActiveMenu('Salary'); }}
+                className={activeMenu === 'Attendance' ? 'active' : ''}
+                onClick={(e) => { e.preventDefault(); setActiveMenu('Attendance'); }}
               >
-                Salary
+                Attendance
               </a>
             </li>
             <li>
