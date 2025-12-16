@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import Login from './pages/Login/Login'
 import Sidebar from './components/Sidebar/Sidebar'
 import EmployeeSidebar from './components/EmployeeSidebar/EmployeeSidebar'
@@ -9,48 +10,40 @@ import EmployeeDashboard from './pages/EmployeeDashboard/EmployeeDashboard'
 import ApplicantOpenings from './pages/ApplicantOpenings/ApplicantOpenings'
 import ApplicantApplications from './pages/ApplicantApplications/ApplicantApplications'
 import AdminOpenings from './pages/AdminOpenings/AdminOpenings'
+import AdminLeaves from './pages/AdminLeaves/AdminLeaves'
+import AdminAttendance from './pages/AdminAttendance/AdminAttendance'
 import './App.css'
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userRole, setUserRole] = useState(null) // 'employee' | 'administrator' | 'applicant'
-  const [activeMenu, setActiveMenu] = useState('Dashboard')
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    const stored = localStorage.getItem('auth')
+    return !!stored
+  })
+  const [userRole, setUserRole] = useState(() => {
+    const stored = localStorage.getItem('auth')
+    if (!stored) return null
+    try {
+      return JSON.parse(stored).role
+    } catch {
+      return null
+    }
+  }) // 'employee' | 'administrator' | 'applicant'
+  const [userInfo, setUserInfo] = useState(() => {
+    const stored = localStorage.getItem('auth')
+    if (!stored) return null
+    try {
+      return JSON.parse(stored).userInfo
+    } catch {
+      return null
+    }
+  })
+  const [activeMenu, setActiveMenuState] = useState(() => {
+    return localStorage.getItem('activeMenu') || 'Dashboard'
+  })
   const [showSubmenu, setShowSubmenu] = useState(false)
   const [unviewedCVsCount] = useState(5) // This would come from your data/API
-
-  // Shared openings and applications data
-  const [openings, setOpenings] = useState([
-    {
-      id: 'OP001',
-      title: 'Senior Software Engineer',
-      department: 'Technology',
-      location: 'Remote',
-      type: 'Full-time',
-      postedDate: '15 Nov, 2024',
-      applicants: 25,
-      status: 'Active'
-    },
-    {
-      id: 'OP002',
-      title: 'Product Manager',
-      department: 'Product',
-      location: 'New York, NY',
-      type: 'Full-time',
-      postedDate: '14 Nov, 2024',
-      applicants: 18,
-      status: 'Active'
-    },
-    {
-      id: 'OP003',
-      title: 'UX Designer',
-      department: 'Design',
-      location: 'San Francisco, CA',
-      type: 'Full-time',
-      postedDate: '13 Nov, 2024',
-      applicants: 32,
-      status: 'Active'
-    }
-  ])
 
   const [applications, setApplications] = useState([
     {
@@ -71,26 +64,66 @@ function App() {
     setApplications([application, ...applications])
   }
 
-  const handleLogin = (role, credentials) => {
-    // In a real app, you would validate credentials with an API
-    console.log('Login attempt:', role, credentials)
+  const setActiveMenu = (menu) => {
+    setActiveMenuState(menu)
+    localStorage.setItem('activeMenu', menu)
+  }
+
+  const handleLogin = (role, authData) => {
+    console.log('Login attempt:', role, authData)
     setIsLoggedIn(true)
     setUserRole(role)
+    setUserInfo(authData || null)
     // Set default menu based on role
+    let defaultMenu = 'Dashboard'
     if (role === 'employee') {
-      setActiveMenu('Dashboard')
+      defaultMenu = 'Dashboard'
     } else if (role === 'applicant') {
-      setActiveMenu('Openings')
+      defaultMenu = 'Openings'
     } else {
-      setActiveMenu('Employee')
+      defaultMenu = 'Employee'
     }
+    setActiveMenu(defaultMenu)
+    localStorage.setItem(
+      'auth',
+      JSON.stringify({
+        role,
+        userInfo: authData || null
+      })
+    )
+    localStorage.setItem('activeMenu', defaultMenu)
   }
 
   const handleLogout = () => {
     setIsLoggedIn(false)
     setUserRole(null)
     setActiveMenu('Dashboard')
+    localStorage.removeItem('auth')
+    localStorage.removeItem('activeMenu')
+    navigate('/login', { replace: true })
   }
+
+  // Ensure URL matches auth state on first load
+  useEffect(() => {
+    if (!isLoggedIn) {
+      if (location.pathname !== '/login') {
+        navigate('/login', { replace: true })
+      }
+      return
+    }
+
+    // Logged in: redirect base paths to role-specific default if needed
+    const defaultPath =
+      userRole === 'employee'
+        ? '/employee/dashboard'
+        : userRole === 'applicant'
+        ? '/applicant/openings'
+        : '/admin/employee'
+
+    if (location.pathname === '/' || location.pathname === '/login') {
+      navigate(defaultPath, { replace: true })
+    }
+  }, [isLoggedIn, userRole, location.pathname, navigate])
 
   const renderAdminPage = () => {
     switch (activeMenu) {
@@ -99,7 +132,11 @@ function App() {
       case 'Hiring':
         return <Hiring />
       case 'Admin Openings':
-        return <AdminOpenings openings={openings} setOpenings={setOpenings} />
+        return <AdminOpenings />
+      case 'Leaves':
+        return <AdminLeaves />
+      case 'Attendance':
+        return <AdminAttendance />
       case 'Dashboard':
         return <div className="page-placeholder">Dashboard Page - Coming Soon</div>
       case 'Salary':
@@ -122,9 +159,9 @@ function App() {
   const renderEmployeePage = () => {
     switch (activeMenu) {
       case 'Dashboard':
-        return <EmployeeDashboard />
+        return <EmployeeDashboard user={userInfo} />
       default:
-        return <EmployeeDashboard />
+        return <EmployeeDashboard user={userInfo} />
     }
   }
 
@@ -132,87 +169,134 @@ function App() {
     switch (activeMenu) {
       case 'Openings':
         return (
-          <ApplicantOpenings
-            openings={openings.filter((o) => o.status === 'Active')}
-            onApply={handleApplicantApply}
-          />
+          <ApplicantOpenings onApply={handleApplicantApply} />
         )
       case 'Applications':
         return <ApplicantApplications applications={applications} />
       default:
         return (
-          <ApplicantOpenings
-            openings={openings.filter((o) => o.status === 'Active')}
-            onApply={handleApplicantApply}
-          />
+          <ApplicantOpenings onApply={handleApplicantApply} />
         )
     }
   }
 
-  // Show login page if not logged in
-  if (!isLoggedIn) {
-    return <Login onLogin={handleLogin} />
-  }
+  const defaultPath =
+    userRole === 'employee'
+      ? '/employee/dashboard'
+      : userRole === 'applicant'
+      ? '/applicant/openings'
+      : '/admin/employee'
 
-  // Render based on user role
   return (
-    <div className="hr-app">
-      {userRole === 'employee' ? (
-        <>
-          <EmployeeSidebar
-            activeMenu={activeMenu}
-            setActiveMenu={setActiveMenu}
-          />
-          <main className="main-content">
-            <div className="content-wrapper">
-              <div className="header-actions">
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-              {renderEmployeePage()}
+    <Routes>
+      {/* Public route */}
+      <Route
+        path="/login"
+        element={
+          isLoggedIn ? (
+            <Navigate to={defaultPath} replace />
+          ) : (
+            <Login onLogin={handleLogin} />
+          )
+        }
+      />
+
+      {/* Employee routes */}
+      <Route
+        path="/employee/*"
+        element={
+          !isLoggedIn || userRole !== 'employee' ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <div className="hr-app">
+              <EmployeeSidebar
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+              />
+              <main className="main-content">
+                <div className="content-wrapper">
+                  <div className="header-actions">
+                    <button className="logout-btn" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                  {renderEmployeePage()}
+                </div>
+              </main>
             </div>
-          </main>
-        </>
-      ) : userRole === 'applicant' ? (
-        <>
-          <ApplicantSidebar
-            activeMenu={activeMenu}
-            setActiveMenu={setActiveMenu}
-          />
-          <main className="main-content">
-            <div className="content-wrapper">
-              <div className="header-actions">
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-              {renderApplicantPage()}
+          )
+        }
+      />
+
+      {/* Applicant routes */}
+      <Route
+        path="/applicant/*"
+        element={
+          !isLoggedIn || userRole !== 'applicant' ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <div className="hr-app">
+              <ApplicantSidebar
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+              />
+              <main className="main-content">
+                <div className="content-wrapper">
+                  <div className="header-actions">
+                    <button className="logout-btn" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                  {renderApplicantPage()}
+                </div>
+              </main>
             </div>
-          </main>
-        </>
-      ) : (
-        <>
-          <Sidebar
-            activeMenu={activeMenu}
-            setActiveMenu={setActiveMenu}
-            showSubmenu={showSubmenu}
-            setShowSubmenu={setShowSubmenu}
-            unviewedCVsCount={unviewedCVsCount}
-          />
-          <main className="main-content">
-            <div className="content-wrapper">
-              <div className="header-actions">
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-              {renderAdminPage()}
+          )
+        }
+      />
+
+      {/* Admin routes */}
+      <Route
+        path="/admin/*"
+        element={
+          !isLoggedIn || (userRole !== 'administrator' && userRole !== 'admin') ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <div className="hr-app">
+              <Sidebar
+                activeMenu={activeMenu}
+                setActiveMenu={setActiveMenu}
+                showSubmenu={showSubmenu}
+                setShowSubmenu={setShowSubmenu}
+                unviewedCVsCount={unviewedCVsCount}
+              />
+              <main className="main-content">
+                <div className="content-wrapper">
+                  <div className="header-actions">
+                    <button className="logout-btn" onClick={handleLogout}>
+                      Logout
+                    </button>
+                  </div>
+                  {renderAdminPage()}
+                </div>
+              </main>
             </div>
-          </main>
-        </>
-      )}
-    </div>
+          )
+        }
+      />
+
+      {/* Fallback */}
+      <Route
+        path="*"
+        element={
+          isLoggedIn ? (
+            <Navigate to={defaultPath} replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
+    </Routes>
   )
 }
 

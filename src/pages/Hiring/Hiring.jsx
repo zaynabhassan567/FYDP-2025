@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getAllJobs, getApplicationsForJob, BACKEND_URL, updateApplicationStatus } from '../../api'
 import CVList from './components/CVList/CVList'
 import PositionFilter from './components/PositionFilter/PositionFilter'
 import ManualReview from './components/ManualReview/ManualReview'
@@ -6,83 +7,101 @@ import AIFiltering from './components/AIFiltering/AIFiltering'
 import './Hiring.css'
 
 function Hiring() {
-  const [selectedPosition, setSelectedPosition] = useState('')
+  const [selectedPosition, setSelectedPosition] = useState('All Positions')
   const [selectedCV, setSelectedCV] = useState(null)
   const [viewMode, setViewMode] = useState('list') // 'list', 'manual', 'ai'
+  const [cvs, setCVs] = useState([])
+  const [jobs, setJobs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const [cvs, setCVs] = useState([
-    {
-      id: 'CV001',
-      applicantName: 'John Smith',
-      email: 'john.smith@email.com',
-      position: 'Software Engineer',
-      uploadedDate: '15 Nov, 2024',
-      status: 'Unviewed',
-      fileName: 'john_smith_resume.pdf',
-      matchScore: null
-    },
-    {
-      id: 'CV002',
-      applicantName: 'Sarah Johnson',
-      email: 'sarah.j@email.com',
-      position: 'Product Manager',
-      uploadedDate: '14 Nov, 2024',
-      status: 'Unviewed',
-      fileName: 'sarah_johnson_resume.pdf',
-      matchScore: null
-    },
-    {
-      id: 'CV003',
-      applicantName: 'Michael Chen',
-      email: 'michael.chen@email.com',
-      position: 'Software Engineer',
-      uploadedDate: '13 Nov, 2024',
-      status: 'Viewed',
-      fileName: 'michael_chen_resume.pdf',
-      matchScore: null
-    },
-    {
-      id: 'CV004',
-      applicantName: 'Emily Davis',
-      email: 'emily.davis@email.com',
-      position: 'UX Designer',
-      uploadedDate: '12 Nov, 2024',
-      status: 'Unviewed',
-      fileName: 'emily_davis_resume.pdf',
-      matchScore: null
-    },
-    {
-      id: 'CV005',
-      applicantName: 'David Wilson',
-      email: 'david.w@email.com',
-      position: 'Software Engineer',
-      uploadedDate: '11 Nov, 2024',
-      status: 'Unviewed',
-      fileName: 'david_wilson_resume.pdf',
-      matchScore: null
-    },
-    {
-      id: 'CV006',
-      applicantName: 'Lisa Anderson',
-      email: 'lisa.a@email.com',
-      position: 'Data Analyst',
-      uploadedDate: '10 Nov, 2024',
-      status: 'Unviewed',
-      fileName: 'lisa_anderson_resume.pdf',
-      matchScore: null
-    }
-  ])
+  const positions = ['All Positions', ...jobs.map((j) => j.title)]
 
-  const positions = ['All Positions', 'Software Engineer', 'Product Manager', 'UX Designer', 'Data Analyst', 'Marketing Manager']
-
-  const filteredCVs = selectedPosition && selectedPosition !== 'All Positions'
-    ? cvs.filter(cv => cv.position === selectedPosition)
-    : cvs
+  const filteredCVs =
+    selectedPosition && selectedPosition !== 'All Positions'
+      ? cvs.filter((cv) => cv.position === selectedPosition)
+      : cvs
 
   const unviewedCount = cvs.filter(cv => cv.status === 'Unviewed').length
 
+  useEffect(() => {
+    const loadApplicationsForJob = async (jobId, jobTitle) => {
+      if (!jobId) {
+        setCVs([])
+        return
+      }
+      try {
+        const appsRes = await getApplicationsForJob(jobId)
+        const apps = appsRes.data || []
+        const mapped = apps.map((app, index) => ({
+          id: app._id || `CV${index + 1}`,
+          applicantName: app.candidate_name,
+          email: app.candidate_email,
+          position: jobTitle,
+          uploadedDate: app.applied_at
+            ? new Date(app.applied_at).toLocaleDateString('en-US', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+              })
+            : '-',
+          status: app.status || 'Unviewed',
+          fileName: app.cv_url
+            ? app.cv_url.startsWith('http')
+              ? app.cv_url
+              : `${BACKEND_URL}${app.cv_url}`
+            : '',
+          matchScore: app.ai_score ?? null
+        }))
+        setCVs(mapped)
+      } catch (err) {
+        console.error('Error loading applications', err)
+        setError('Failed to load applications')
+      }
+    }
+
+    const fetchJobsAndApplications = async () => {
+      try {
+        setLoading(true)
+        setError('')
+        const jobsRes = await getAllJobs()
+        const jobsData = jobsRes.data || []
+        setJobs(jobsData)
+
+        // Load applications for first job by default
+        if (jobsData.length > 0) {
+          const firstJob = jobsData[0]
+          await loadApplicationsForJob(firstJob._id, firstJob.title)
+        } else {
+          setCVs([])
+        }
+      } catch (err) {
+        console.error('Error loading jobs/applications', err)
+        setError('Failed to load hiring data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchJobsAndApplications()
+
+    // expose function for use in handlers (hacky but simple for now)
+    Hiring._loadApplicationsForJob = loadApplicationsForJob
+  }, [])
+
   const handlePositionChange = (position) => {
     setSelectedPosition(position)
+    if (position === 'All Positions') {
+      // For simplicity, reload first job's applications
+      if (jobs.length > 0 && Hiring._loadApplicationsForJob) {
+        Hiring._loadApplicationsForJob(jobs[0]._id, jobs[0].title)
+      }
+    } else {
+      const job = jobs.find((j) => j.title === position)
+      if (job && Hiring._loadApplicationsForJob) {
+        Hiring._loadApplicationsForJob(job._id, job.title)
+      }
+    }
   }
 
   const handleViewCV = (cv) => {
@@ -101,6 +120,24 @@ function Hiring() {
     setSelectedCV(null)
   }
 
+  const handleUpdateStatus = async (cv, newStatus) => {
+    if (!cv?.id) return
+    // Optimistic UI update
+    setCVs(prev =>
+      prev.map((c) => (c.id === cv.id ? { ...c, status: newStatus } : c))
+    )
+    try {
+      await updateApplicationStatus(cv.id, newStatus)
+    } catch (err) {
+      console.error('Error updating status', err)
+      // Revert if failed
+      setCVs(prev =>
+        prev.map((c) => (c.id === cv.id ? { ...c, status: cv.status } : c))
+      )
+      setError('Failed to update application status')
+    }
+  }
+
   return (
     <div className="hiring-page">
       <h1 className="page-title">Hello Thomas</h1>
@@ -117,6 +154,9 @@ function Hiring() {
             </span>
           </div>
         </div>
+
+        {loading && <div className="no-openings">Loading hiring data...</div>}
+        {error && !loading && <div className="no-openings">{error}</div>}
 
         {viewMode === 'list' && (
           <>
@@ -169,6 +209,8 @@ function Hiring() {
             }}
             totalCVs={filteredCVs.length}
             currentIndex={filteredCVs.findIndex(c => c.id === selectedCV?.id) + 1}
+            onShortlist={() => handleUpdateStatus(selectedCV, 'Shortlisted')}
+            onReject={() => handleUpdateStatus(selectedCV, 'Rejected')}
           />
         )}
 

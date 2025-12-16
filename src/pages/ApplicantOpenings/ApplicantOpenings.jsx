@@ -1,14 +1,21 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { getAllJobs, applyForJob, BACKEND_URL } from '../../api'
 import './ApplicantOpenings.css'
 
-function ApplicantOpenings({ openings, onApply }) {
+function ApplicantOpenings({ onApply }) {
+  const [openings, setOpenings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedOpening, setSelectedOpening] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    resumeLink: ''
+    cvFile: null
   })
 
   const openApplyModal = (opening) => {
@@ -23,7 +30,7 @@ function ApplicantOpenings({ openings, onApply }) {
       name: '',
       email: '',
       phone: '',
-      resumeLink: ''
+      cvFile: null
     })
   }
 
@@ -31,28 +38,76 @@ function ApplicantOpenings({ openings, onApply }) {
     setFormData({ ...formData, [field]: value })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!selectedOpening) return
 
-    onApply({
-      openingId: selectedOpening.id,
-      title: selectedOpening.title,
-      department: selectedOpening.department,
-      status: 'Submitted',
-      appliedDate: new Date().toLocaleDateString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric'
-      }),
-      applicantName: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      resumeLink: formData.resumeLink
-    })
+    try {
+      setSubmitting(true)
+      setSubmitError('')
 
-    closeModal()
+      if (!formData.cvFile) {
+        setSubmitError('Please upload your CV (PDF)')
+        setSubmitting(false)
+        return
+      }
+
+      const payload = new FormData()
+      payload.append('job_id', selectedOpening._id)
+      payload.append('candidate_name', formData.name)
+      payload.append('candidate_email', formData.email)
+      payload.append('file', formData.cvFile)
+
+      const res = await applyForJob(payload)
+
+      // Optional: also update local applications list in parent
+      if (onApply) {
+        onApply({
+          openingId: selectedOpening._id,
+          title: selectedOpening.title,
+          department: '',
+          status: 'Submitted',
+          appliedDate: new Date().toLocaleDateString('en-US', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          }),
+          applicantName: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          resumeLink: res?.data?.cv_url
+            ? `${BACKEND_URL}${res.data.cv_url}`
+            : ''
+        })
+      }
+
+      alert('Application submitted')
+      closeModal()
+    } catch (err) {
+      console.error('Error submitting application', err)
+      setSubmitError('Failed to submit application. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
   }
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setLoading(true)
+        setError('')
+        const res = await getAllJobs()
+        setOpenings(res.data || [])
+      } catch (err) {
+        console.error('Error loading jobs', err)
+        setError('Failed to load openings')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchJobs()
+  }, [])
 
   return (
     <div className="applicant-openings-page">
@@ -68,23 +123,26 @@ function ApplicantOpenings({ openings, onApply }) {
           </div>
         </div>
 
+        {loading && <div className="no-openings">Loading openings...</div>}
+        {error && !loading && <div className="no-openings">{error}</div>}
+
         <div className="openings-list">
-          {openings.map((opening) => (
-            <div key={opening.id} className="opening-card">
+          {!loading && !error && openings.map((opening) => (
+            <div key={opening._id} className="opening-card">
               <div className="opening-header">
                 <div className="opening-title-section">
                   <h3 className="opening-title">{opening.title}</h3>
                   <div className="opening-meta">
-                    <span className="opening-department">{opening.department}</span>
-                    <span className="opening-separator">•</span>
                     <span className="opening-location">{opening.location}</span>
                     <span className="opening-separator">•</span>
-                    <span className="opening-type">{opening.type}</span>
+                    <span className="opening-type">
+                      {opening.salary_range || 'Salary not disclosed'}
+                    </span>
                   </div>
                 </div>
                 <div className="opening-status">
-                  <span className={`status-badge ${opening.status.toLowerCase()}`}>
-                    {opening.status}
+                  <span className={`status-badge ${opening.is_active ? 'active' : 'closed'}`}>
+                    {opening.is_active ? 'Active' : 'Closed'}
                   </span>
                 </div>
               </div>
@@ -92,11 +150,15 @@ function ApplicantOpenings({ openings, onApply }) {
               <div className="opening-details">
                 <div className="detail-item">
                   <span className="detail-label">Posted:</span>
-                  <span className="detail-value">{opening.postedDate}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Applicants:</span>
-                  <span className="detail-value">{opening.applicants}</span>
+                  <span className="detail-value">
+                    {opening.created_at
+                      ? new Date(opening.created_at).toLocaleDateString('en-US', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })
+                      : '-'}
+                  </span>
                 </div>
               </div>
 
@@ -112,7 +174,7 @@ function ApplicantOpenings({ openings, onApply }) {
           ))}
         </div>
 
-        {openings.length === 0 && (
+        {!loading && !error && openings.length === 0 && (
           <div className="no-openings">
             <p>No openings available at the moment.</p>
           </div>
@@ -164,23 +226,23 @@ function ApplicantOpenings({ openings, onApply }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="resumeLink">Resume / CV Link</label>
+                  <label htmlFor="cvFile">Resume / CV (PDF)</label>
                   <input
-                    id="resumeLink"
-                    type="url"
-                    value={formData.resumeLink}
-                    onChange={(e) => handleChange('resumeLink', e.target.value)}
-                    placeholder="https://drive.google.com/your-cv"
+                    id="cvFile"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => handleChange('cvFile', e.target.files[0] || null)}
                     required
                   />
                 </div>
               </div>
+              {submitError && <div className="no-openings">{submitError}</div>}
               <div className="modal-actions">
                 <button type="button" className="secondary-btn" onClick={closeModal}>
                   Cancel
                 </button>
                 <button type="submit" className="primary-btn">
-                  Submit Application
+                  {submitting ? 'Submitting...' : 'Submit Application'}
                 </button>
               </div>
             </form>

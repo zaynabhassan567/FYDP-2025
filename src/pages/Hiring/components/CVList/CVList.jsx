@@ -2,7 +2,10 @@ import './CVList.css'
 
 function CVList({ cvs, onViewCV, onDeleteCV }) {
   const getStatusClass = (status) => {
-    return status === 'Unviewed' ? 'status-unviewed' : 'status-viewed'
+    if (status === 'Unviewed' || status === 'Pending') return 'status-unviewed'
+    if (status === 'Shortlisted') return 'status-shortlisted'
+    if (status === 'Rejected') return 'status-rejected'
+    return 'status-viewed'
   }
 
   return (

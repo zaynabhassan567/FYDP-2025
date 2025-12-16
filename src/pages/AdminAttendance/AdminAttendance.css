@@ -1,0 +1,104 @@
+.admin-attendance-page {
+  width: 100%;
+}
+
+.attendance-section {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.section-heading {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.filter-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+}
+
+.attendance-table-wrapper {
+  margin-top: 10px;
+  overflow-x: auto;
+}
+
+.attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.attendance-table th,
+.attendance-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.attendance-table thead {
+  background: #f9fafb;
+}
+
+.attendance-table th {
+  font-weight: 600;
+  color: #374151;
+}
+
+.attendance-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.attendance-table input {
+  width: 80px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.no-data {
+  text-align: center;
+  padding: 30px 0;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .attendance-table {
+    min-width: 900px;
+  }
+}
+
+

@@ -190,7 +190,14 @@
   font-size: 14px;
 }
 
-/* Salary Section */
+/* Salary + Leave Section */
+.salary-and-leave {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+
 .salary-section {
   margin-bottom: 20px;
 }
@@ -270,6 +277,155 @@
   margin: 10px 0;
 }
 
+/* Leave form styles (employee view) */
+.leave-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 22px;
+  border: 1px solid #e0e0e0;
+}
+
+.leave-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.leave-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.leave-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leave-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.leave-form input,
+.leave-form select,
+.leave-form textarea {
+  padding: 9px 11px;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  font-size: 13px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.leave-form input:focus,
+.leave-form select:focus,
+.leave-form textarea:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.12);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  color: white;
+  transition: all 0.2s ease;
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(74, 144, 226, 0.3);
+}
+
+.leave-history {
+  margin-top: 6px;
+}
+
+.leave-history-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+
+.leave-error-text {
+  font-size: 13px;
+  color: #b91c1c;
+  margin-bottom: 6px;
+}
+
+.leave-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leave-item {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 9px 11px;
+  border-left: 4px solid #4A90E2;
+}
+
+.leave-item.approved {
+  border-left-color: #27ae60;
+}
+
+.leave-item.pending {
+  border-left-color: #f39c12;
+}
+
+.leave-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  gap: 8px;
+}
+
+.leave-type {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.leave-status-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.leave-status-badge.approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.leave-status-badge.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.leave-item-dates {
+  font-size: 12px;
+  color: #666;
+}
+
 @media (max-width: 1024px) {
   .employee-details-grid {
     grid-template-columns: 1fr;
@@ -277,6 +433,10 @@
 }
 
 @media (max-width: 768px) {
+  .salary-and-leave {
+    grid-template-columns: 1fr;
+  }
+
   .attendance-summary {
     grid-template-columns: 1fr;
   }
