@@ -22,6 +22,8 @@ export const signup = (data) => API.post('/employee/signup', data);
 export const login = (data) => API.post('/employee/login', data);
 export const getAllEmployees = () => API.get('/employee/all');
 export const getEmployee = (employeeCode) => API.get(`/employee/${employeeCode}`);
+export const updateEmployee = (employeeCode, data) => API.patch(`/employee/${employeeCode}`, data);
+export const addEmployee = (data) => API.post('/employee/add', data);
 
 // B. JOBS (HR Jobs post karega, Candidates dekhenge)
 export const createJob = (jobData) => API.post('/jobs/create', jobData);
@@ -44,6 +46,8 @@ export const upsertAttendance = (data) => API.post('/attendance/upsert', data);
 // D. APPLICATIONS (CV Upload karna)
 export const applyForJob = (applicationData) => API.post('/applications/apply-file', applicationData);
 export const getApplicationsForJob = (jobId) => API.get(`/applications/${jobId}`);
+export const getApplicationsByCandidate = (candidateEmail) => API.get(`/applications/candidate/${candidateEmail}`);
+export const getAllApplications = () => API.get('/applications/all');
 export const updateApplicationStatus = (applicationId, status) =>
   API.patch(`/applications/${applicationId}/status`, { status });
 

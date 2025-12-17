@@ -60,7 +60,26 @@ async def apply_for_job_with_file(
         "cv_url": cv_url,
     }
 
-# 2. GET APPLICATIONS FOR A JOB (HR dekhega)
+# 2. GET ALL APPLICATIONS (Admin dekhega - for counting unviewed)
+# This must come before /{job_id} to avoid route conflicts
+@router.get("/all")
+async def get_all_applications():
+    apps = []
+    async for app in application_collection.find():
+        app["_id"] = str(app["_id"])
+        apps.append(app)
+    return apps
+
+# 2.b GET APPLICATIONS BY CANDIDATE EMAIL (Applicant dekhega)
+@router.get("/candidate/{candidate_email}")
+async def get_applications_by_candidate(candidate_email: str):
+    apps = []
+    async for app in application_collection.find({"candidate_email": candidate_email}):
+        app["_id"] = str(app["_id"])
+        apps.append(app)
+    return apps
+
+# 2.c GET APPLICATIONS FOR A JOB (HR dekhega)
 @router.get("/{job_id}")
 async def get_applications_by_job(job_id: str):
     apps = []

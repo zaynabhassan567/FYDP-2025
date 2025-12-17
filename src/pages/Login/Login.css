@@ -3,22 +3,51 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  background: radial-gradient(circle at 20% 20%, rgba(74, 144, 226, 0.12), transparent 35%),
+              radial-gradient(circle at 80% 0%, rgba(30, 136, 229, 0.12), transparent 30%),
+              #f6f8fc;
+  padding: 24px;
 }
 
 .login-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+  border-radius: 14px;
+  border: 1px solid #e3eaf5;
+  box-shadow: 0 24px 60px rgba(30, 136, 229, 0.15), 0 8px 20px rgba(0, 0, 0, 0.04);
   padding: 40px;
   width: 100%;
-  max-width: 500px;
+  max-width: 520px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, rgba(30, 136, 229, 0.08), rgba(13, 110, 253, 0.08));
+  opacity: 0.7;
+}
+
+.login-container > * {
+  position: relative;
+  z-index: 1;
 }
 
 .login-header {
   text-align: center;
   margin-bottom: 40px;
+}
+
+.login-header::after {
+  content: '';
+  display: block;
+  width: 64px;
+  height: 4px;
+  border-radius: 999px;
+  margin: 14px auto 0;
+  background: linear-gradient(135deg, #1e88e5 0%, #0d6efd 100%);
 }
 
 .login-logo {
@@ -52,7 +81,7 @@
 }
 
 .role-card {
-  background: #f8f9fa;
+  background: #f8fbff;
   border: 2px solid #e0e0e0;
   border-radius: 8px;
   padding: 20px;
@@ -60,18 +89,20 @@
   transition: all 0.3s ease;
   text-align: center;
   font-family: inherit;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
 }
 
 .role-card:hover {
-  border-color: #4A90E2;
+  border-color: #1e88e5;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+  box-shadow: 0 6px 16px rgba(30, 136, 229, 0.18);
 }
 
 .role-card.selected {
-  border-color: #4A90E2;
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  border-color: #1e88e5;
+  background: linear-gradient(135deg, #1e88e5 0%, #0d6efd 100%);
   color: white;
+  box-shadow: 0 12px 30px rgba(13, 110, 253, 0.35);
 }
 
 .role-card.selected h3,
@@ -98,7 +129,12 @@
 }
 
 .login-form {
-  margin-top: 30px;
+  margin-top: 24px;
+  background: #ffffff;
+  border: 1px solid #e6ecf5;
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .form-group {
@@ -116,11 +152,12 @@
 .form-group input {
   width: 100%;
   padding: 12px 15px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
+  border: 1.5px solid #d7e3f3;
+  border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: all 0.3s ease;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
 }
 
 .form-group input:focus {
@@ -132,10 +169,10 @@
 .login-button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+  background: linear-gradient(135deg, #1e88e5 0%, #0d6efd 100%);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -145,17 +182,58 @@
 
 .login-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+  box-shadow: 0 6px 16px rgba(30, 136, 229, 0.25);
 }
 
 .login-button:active {
   transform: translateY(0);
+  box-shadow: 0 3px 10px rgba(13, 110, 253, 0.3);
 }
 
 .login-error {
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.error-message {
   font-size: 13px;
   color: #b91c1c;
+  font-weight: 500;
+}
+
+.try-again-button {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #1e88e5 0%, #0d6efd 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+  font-family: inherit;
+}
+
+.try-again-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+}
+
+.try-again-button:active {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .auth-toggle {

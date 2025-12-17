@@ -10,12 +10,23 @@ class EmployeeModel(BaseModel):
     email: EmailStr = Field(...)
     password: str = Field(...)
     employee_code: str = Field(..., min_length=4, description="Unique ID provided by HR")
+    cnic: str = Field(..., min_length=13, max_length=13, description="CNIC number (13 digits, unique)")
     role: str = Field(default="Employee")  # Admin, HR, Employee
     salary: float = Field(default=0.0)
+    mobile: Optional[str] = Field(default=None, description="Mobile number")
     # Joining date aur Paid leaves track karne ke liye
     joined_at: datetime = Field(default_factory=datetime.utcnow)
     paid_leaves_total: int = Field(default=20)
     paid_leaves_used: int = Field(default=0)
+
+# Model for Admin to add employee (without password/email initially)
+class AddEmployeeModel(BaseModel):
+    employee_code: str = Field(..., min_length=4, description="Unique ID provided by HR")
+    cnic: str = Field(..., min_length=13, max_length=13, description="CNIC number (13 digits, unique)")
+    full_name: Optional[str] = Field(default=None)
+    role: str = Field(default="Employee")
+    salary: float = Field(default=0.0)
+    mobile: Optional[str] = Field(default=None)
 
     class Config:
         json_schema_extra = {
@@ -24,6 +35,7 @@ class EmployeeModel(BaseModel):
                 "email": "ali@company.com",
                 "password": "strongpassword",
                 "employee_code": "EMP001",
+                "cnic": "1234567890123",
                 "role": "Employee",
                 "salary": 75000
             }
@@ -85,9 +97,10 @@ class AttendanceModel(BaseModel):
     month: int = Field(..., ge=1, le=12)
     year: int = Field(..., ge=2000)
     absent_days: int = Field(default=0)
-    approved_leaves: int = Field(default=0)
-    paid_leaves: int = Field(default=0)
+    approved_leaves: int = Field(default=0)  # Auto-calculated from leaves database (Approved status only)
+    paid_leaves: int = Field(default=0)  # Deprecated - not used in calculation
     daily_deduction: float = Field(default=0.0)
+    unapproved_absence: int = Field(default=0)  # absent_days - approved_leaves (from leaves database)
 
     class Config:
         json_schema_extra = {

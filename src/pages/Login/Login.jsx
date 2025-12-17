@@ -8,7 +8,8 @@ function Login({ onLogin }) {
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [employeeCode, setEmployeeCode] = useState('')
-  const [salary, setSalary] = useState('')
+  const [cnic, setCnic] = useState('')
+  const [mobile, setMobile] = useState('')
   const [mode, setMode] = useState('login') // 'login' | 'signup'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -30,14 +31,23 @@ function Login({ onLogin }) {
         setLoading(true)
 
         if (mode === 'signup') {
-          // 1) Signup call
+          // Validate CNIC (13 digits)
+          if (!cnic || cnic.length !== 13 || !/^\d+$/.test(cnic)) {
+            setError('CNIC must be exactly 13 digits')
+            setLoading(false)
+            return
+          }
+
+          // 1) Signup call - verifies CNIC and employee_code match existing record
           const payload = {
             full_name: fullName,
             email,
             password,
             employee_code: employeeCode,
+            cnic: cnic,
             role: 'Employee',
-            salary: Number(salary) || 0
+            salary: 0, // Salary will be set by administrator later
+            mobile: mobile || null
           }
 
           await employeeSignup(payload)
@@ -143,14 +153,31 @@ function Login({ onLogin }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="salary">Salary (optional)</label>
+                  <label htmlFor="cnic">CNIC Number</label>
                   <input
-                    type="number"
-                    id="salary"
-                    value={salary}
-                    onChange={(e) => setSalary(e.target.value)}
-                    placeholder="75000"
-                    min="0"
+                    type="text"
+                    id="cnic"
+                    value={cnic}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '') // Only digits
+                      if (value.length <= 13) {
+                        setCnic(value)
+                      }
+                    }}
+                    placeholder="1234567890123"
+                    maxLength={13}
+                    required
+                  />
+                  <small style={{ color: '#666', fontSize: '12px' }}>13 digits only</small>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="mobile">Mobile Number (Optional)</label>
+                  <input
+                    type="text"
+                    id="mobile"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value)}
+                    placeholder="+92 300 1234567"
                   />
                 </div>
               </>
@@ -180,9 +207,31 @@ function Login({ onLogin }) {
               />
             </div>
 
-            {error && <div className="login-error">{error}</div>}
+            {error && (
+              <div className="login-error">
+                <div className="error-message">{error}</div>
+                {(error.includes('CNIC') || error.includes('Email') || error.includes('already') || error.includes('not enrolled')) && (
+                  <button
+                    type="button"
+                    className="try-again-button"
+                    onClick={() => {
+                      setError('')
+                      if (mode === 'signup' && selectedRole === 'employee') {
+                        setCnic('')
+                        setEmail('')
+                        setFullName('')
+                        setEmployeeCode('')
+                        setMobile('')
+                      }
+                    }}
+                  >
+                    Try Again
+                  </button>
+                )}
+              </div>
+            )}
 
-            <button type="submit" className="login-button">
+            <button type="submit" className="login-button" disabled={loading}>
               {loading
                 ? 'Please wait...'
                 : mode === 'signup' && selectedRole === 'employee'
