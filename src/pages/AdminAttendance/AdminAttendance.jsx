@@ -39,20 +39,20 @@ function AdminAttendance() {
         const dailyBase =
           e.salary && e.salary > 0 ? Number((e.salary / 22).toFixed(0)) : 0
         const absent = att.absent_days ?? 0
+        // approved_leaves is automatically calculated from leaves database (Approved status only)
         const approved = att.approved_leaves ?? 0
-        const paid = att.paid_leaves ?? e.paid_leaves_total ?? 0
         const daily = att.daily_deduction ?? dailyBase
-        const unpaid = att.unpaid_days ?? Math.max(0, absent - approved - paid)
-        const totalDed = att.total_deduction ?? unpaid * daily
+        // unapproved_absence = absent_days - approved_leaves (from leaves database)
+        const unapprovedAbsence = att.unapproved_absence ?? Math.max(0, absent - approved)
+        const totalDed = att.total_deduction ?? unapprovedAbsence * daily
         return {
           employee_code: key,
           full_name: e.full_name,
           salary: e.salary || 0,
           absent_days: absent,
-          approved_leaves: approved,
-          paid_leaves: paid,
+          approved_leaves: approved, // Auto-fetched from leaves database
           daily_deduction: daily,
-          unpaid_days: unpaid,
+          unapproved_absence: unapprovedAbsence,
           total_deduction: totalDed
         }
       })
@@ -72,9 +72,18 @@ function AdminAttendance() {
 
   const handleChange = (code, field, value) => {
     setRows((prev) =>
-      prev.map((r) =>
-        r.employee_code === code ? { ...r, [field]: value } : r
-      )
+      prev.map((r) => {
+        if (r.employee_code !== code) return r
+        const updated = { ...r, [field]: value }
+        // Recalculate unapproved_absence when absent_days changes
+        // approved_leaves comes from leaves database automatically
+        if (field === 'absent_days') {
+          const absent = Number(updated.absent_days || 0)
+          const approved = Number(updated.approved_leaves || 0)
+          updated.unapproved_absence = Math.max(0, absent - approved)
+        }
+        return updated
+      })
     )
   }
 
@@ -86,8 +95,8 @@ function AdminAttendance() {
         month,
         year,
         absent_days: Number(row.absent_days) || 0,
-        approved_leaves: Number(row.approved_leaves) || 0,
-        paid_leaves: Number(row.paid_leaves) || 0,
+        // approved_leaves will be auto-calculated from leaves database in backend
+        approved_leaves: 0, // Will be overridden by backend
         daily_deduction: Number(row.daily_deduction) || 0
       }
       await upsertAttendance(payload)
@@ -152,10 +161,9 @@ function AdminAttendance() {
                 <th>Name</th>
                 <th>Salary</th>
                 <th>Absent Days</th>
-                <th>Approved Leaves</th>
-                <th>Paid Leaves</th>
+                <th>Approved Leaves <br/>(from Leaves DB)</th>
                 <th>Daily Deduction</th>
-                <th>Unpaid Days</th>
+                <th>Unapproved Absence</th>
                 <th>Est. Deduction</th>
                 <th>Actions</th>
               </tr>
@@ -163,14 +171,21 @@ function AdminAttendance() {
             <tbody>
               {rows.length === 0 && !loading ? (
                 <tr>
-                  <td colSpan="10" className="no-data">
+                  <td colSpan="9" className="no-data">
                     No employees or attendance data found.
                   </td>
                 </tr>
               ) : (
                 rows.map((row) => {
-                  const unpaid = Number(row.unpaid_days || 0)
-                  const ded = Number(row.total_deduction || 0)
+                  // Use stored unapproved_absence or calculate it
+                  const absent = Number(row.absent_days || 0)
+                  const approved = Number(row.approved_leaves || 0)
+                  // unapproved_absence = absent_days - approved_leaves (from leaves database)
+                  const unapprovedAbsence = row.unapproved_absence != null 
+                    ? Number(row.unapproved_absence) 
+                    : Math.max(0, absent - approved)
+                  const daily = Number(row.daily_deduction || 0)
+                  const ded = unapprovedAbsence * daily
                   return (
                     <tr key={row.employee_code}>
                       <td>{row.employee_code}</td>
@@ -187,24 +202,11 @@ function AdminAttendance() {
                         />
                       </td>
                       <td>
-                        <input
-                          type="number"
-                          value={row.approved_leaves}
-                          min="0"
-                          onChange={(e) =>
-                            handleChange(row.employee_code, 'approved_leaves', e.target.value)
-                          }
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          value={row.paid_leaves}
-                          min="0"
-                          onChange={(e) =>
-                            handleChange(row.employee_code, 'paid_leaves', e.target.value)
-                          }
-                        />
+                        <strong>{approved}</strong>
+                        <br/>
+                        <small style={{color: '#666', fontSize: '0.85em'}}>
+                          (Auto from Leaves)
+                        </small>
                       </td>
                       <td>
                         <input
@@ -216,7 +218,7 @@ function AdminAttendance() {
                           }
                         />
                       </td>
-                      <td>{unpaid}</td>
+                      <td><strong>{unapprovedAbsence}</strong></td>
                       <td>Rs {ded.toLocaleString()}</td>
                       <td>
                         <button

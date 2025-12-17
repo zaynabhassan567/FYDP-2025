@@ -12,6 +12,7 @@ import ApplicantApplications from './pages/ApplicantApplications/ApplicantApplic
 import AdminOpenings from './pages/AdminOpenings/AdminOpenings'
 import AdminLeaves from './pages/AdminLeaves/AdminLeaves'
 import AdminAttendance from './pages/AdminAttendance/AdminAttendance'
+import { getAllApplications } from './api'
 import './App.css'
 
 function App() {
@@ -43,25 +44,11 @@ function App() {
     return localStorage.getItem('activeMenu') || 'Dashboard'
   })
   const [showSubmenu, setShowSubmenu] = useState(false)
-  const [unviewedCVsCount] = useState(5) // This would come from your data/API
-
-  const [applications, setApplications] = useState([
-    {
-      openingId: 'OP001',
-      title: 'Senior Software Engineer',
-      department: 'Technology',
-      status: 'Submitted',
-      appliedDate: '12 Nov, 2024',
-      applicantName: 'John Applicant',
-      email: 'john.applicant@email.com',
-      phone: '+1 234 567 8900',
-      resumeLink: 'https://drive.google.com/sample-cv',
-      response: 'Your application is under review.'
-    }
-  ])
+  const [unviewedCVsCount, setUnviewedCVsCount] = useState(0)
 
   const handleApplicantApply = (application) => {
-    setApplications([application, ...applications])
+    // Application is now handled in ApplicantApplications component via database
+    // This function can be kept for future use if needed
   }
 
   const setActiveMenu = (menu) => {
@@ -102,6 +89,32 @@ function App() {
     localStorage.removeItem('activeMenu')
     navigate('/login', { replace: true })
   }
+
+  // Fetch unviewed CVs count for admin
+  useEffect(() => {
+    const loadUnviewedCount = async () => {
+      if (userRole === 'administrator' || userRole === 'admin') {
+        try {
+          const res = await getAllApplications()
+          const apps = res.data || []
+          // Count applications with status 'Unviewed' or no status
+          const unviewed = apps.filter(app => 
+            !app.status || app.status === 'Unviewed' || app.status === 'Pending'
+          ).length
+          setUnviewedCVsCount(unviewed)
+        } catch (err) {
+          console.error('Error loading unviewed CVs count', err)
+        }
+      }
+    }
+
+    if (isLoggedIn) {
+      loadUnviewedCount()
+      // Refresh count every 30 seconds
+      const interval = setInterval(loadUnviewedCount, 30000)
+      return () => clearInterval(interval)
+    }
+  }, [isLoggedIn, userRole])
 
   // Ensure URL matches auth state on first load
   useEffect(() => {
@@ -172,7 +185,7 @@ function App() {
           <ApplicantOpenings onApply={handleApplicantApply} />
         )
       case 'Applications':
-        return <ApplicantApplications applications={applications} />
+        return <ApplicantApplications userInfo={userInfo} />
       default:
         return (
           <ApplicantOpenings onApply={handleApplicantApply} />
